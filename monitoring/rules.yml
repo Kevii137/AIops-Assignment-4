@@ -1,0 +1,18 @@
+# recording rules used by the grafana dashboard
+
+groups:
+  - name: node
+    rules:
+      - record: node:cpu_utilisation:percent
+        expr: 100 * (1 - avg(rate(node_cpu_seconds_total{mode="idle"}[30s])))
+
+      - record: node:memory_utilisation:percent
+        expr: 100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
+
+      - record: node:disk_utilisation:percent
+        expr: 100 * (1 - node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"})
+
+  - name: app
+    rules:
+      - record: caption:error_ratio:rate5m
+        expr: (sum(rate(caption_requests_total{status="error"}[5m])) or vector(0)) / clamp_min(sum(rate(caption_requests_total[5m])), 1e-9)
